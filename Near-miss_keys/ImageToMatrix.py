@@ -24,6 +24,20 @@ def ArnoldCatMapTransform(matrix: NDArray, iterations: int, Q: int, P: int) -> N
         result = transformed
 
     return result
+#Permuterar alla pixlar
+def InverseArnoldCatMapTransform(matrix: NDArray, iterations: int, Q: int, P: int) -> NDArray:
+
+    N, M = matrix.shape[0], matrix.shape[1]
+
+    x, y = np.meshgrid(np.arange(N), np.arange(N), indexing="ij")
+
+    x_new = (x + P * y) % N
+    y_new = (Q * x + (P * Q + 1) * y) % N
+
+    result = matrix.copy()
+    for _ in range(iterations):
+        result = result[x_new, y_new]
+    return result
 
 #Skapar en kaotisk nyckel genom att iterera lorenz system 
 def lorenzsColorShuffle(number: int, x0: float, y0: float, z0: float,sigma: float, rho: float, beta: float, transient: float, dt: float,
@@ -72,81 +86,53 @@ matrix = np.array(img)
 # skriver ut matrisens storlek i samtliga dimensioner
 print("Encrypting image with shape: ", matrix.shape)
 
-# Omvandlar matrisen 3D -> 1D
-flat_pixels = matrix.flatten()
-
-# Skapar en 1D matris med slumpmässiga värden från 0 -> flat_pixels.size
-perm_indices = np.random.permutation(flat_pixels.size)
-
-# Kopierar värden från flat_pixels i slumpmässig ordning till ny 1D matris (Permutation)
-shuffled_pixels = flat_pixels[perm_indices]
-
 chaosShuffledArray = ArnoldCatMapTransform(matrix, 10, 1, 1)
 chaosShuffledImg = Image.fromarray(chaosShuffledArray)
 
-# Ändrar på pixelvärden genom bitwise XOR med slumpmässig keystream (Diffusion)
-keystream = np.random.randint(0, 256, size=flat_pixels.size, dtype=np.uint8)
-encrypted_flat = np.bitwise_xor(shuffled_pixels, keystream)
-
-# Omvandlar matrisen 1D -> 3D
-reshaped_matrix = encrypted_flat.reshape(matrix.shape)
-
 # Sparar krypterad 3D matris som bild igen
-encrypted_img = Image.fromarray(reshaped_matrix)
 H, W = matrix.shape[:2]
-chaotickeystream = lorenzsColorShuffle(
-    H * W, 1.0, 1.0, 1.0, 10.0, 28.0, 8.0 / 3.0, 50.0, 0.005
-)
+chaotickeys= lorenzsColorShuffle(H * W, 1.0, 1.0, 1.0, 10.0, 28.0, 8.0 / 3.0, 50.0, 0.005)
+
 # chaoticencryptedArray = lorenzDiffuse(chaosShuffledArray, chaotickeystream)
 chaoticencryptedArray = np.bitwise_xor(
-    chaosShuffledArray.reshape(-1, 3), chaotickeystream.T
+    chaosShuffledArray.reshape(-1, 3), chaotickeys.T
 )
 chaosEncryptedImg = Image.fromarray(chaoticencryptedArray.reshape(matrix.shape))
-""" 
-# Dekrypterar diffusionen genom samma bitwise XOR igen
-decrypted_flat = np.bitwise_xor(chaoticencryptedArray.flatten(), keystream)
 
-# Sorterar tillbaka pixlarna till dess ursprungliga plats m.h.a perm_indices
-inverse_perm = np.argsort(perm_indices)
-recovered_flat = decrypted_flat[inverse_perm]
+# Dekrypterar diffusionen genom samma bitwise XOR igen m.h.a nyckeln chaotickeys
+decrypted_flat = np.bitwise_xor(chaoticencryptedArray.reshape(-1,3), chaotickeys.T)
 
-# Omvandlar matrisen 1D -> 3D
-decrypted_reshaped_matrix = recovered_flat.reshape(matrix.shape)
+#Sorterar tillbaka pixlarna till deras ursprungliga plats m.h.a nycklarna iterations, P och Q
+inverse_perm = InverseArnoldCatMapTransform(decrypted_flat.reshape(matrix.shape),10, 1, 1)
 
 # Sparar dekrypterad 3D matris som bild igen
-decrypted_img = Image.fromarray(decrypted_reshaped_matrix)
- """
-# Öppnar original matrisen, permuterade matrisen och den dekryptedade matrisen som en bild
-# img.show( title = 'Original bild')
-# encrypted_img.show( title = 'krypterad bild')
-# decrypted_img.show( title = 'dekrypterad bild')
-""" 
-plt.subplot(2, 3, 1)
-plt.imshow(img)
-plt.axis("off")
-plt.title("Original Image")
+decrypted_img = Image.fromarray(inverse_perm)
+
+# plt.subplot(2, 3, 1)
+# plt.imshow(img)
+# plt.axis("off")
+# plt.title("Original Image")
 
 
-plt.subplot(2, 3, 4)
-counts, bins = np.histogram(matrix.flatten())
-plt.stairs(counts, bins)
+# plt.subplot(2, 3, 4)
+# counts, bins = np.histogram(matrix.flatten())
+# plt.stairs(counts, bins)
 
-plt.subplot(2, 3, 2)
-plt.imshow(chaosShuffledImg)
-plt.axis("off")
-plt.title("Chaotic Permutation")
+# plt.subplot(2, 3, 2)
+# plt.imshow(chaosEncryptedImg)
+# plt.axis("off")
+# plt.title("Chaotic Cipher")
 
-plt.subplot(2, 3, 5)
-counts, bins = np.histogram(chaosShuffledArray.flatten())
-plt.stairs(counts, bins)
+# plt.subplot(2, 3, 5)
+# counts, bins = np.histogram(chaoticencryptedArray.flatten())
+# plt.stairs(counts, bins)
 
-plt.subplot(2, 3, 3)
-plt.imshow(chaosEncryptedImg)
-plt.axis("off")
-plt.title("Chaotic Cipher")
+# plt.subplot(2, 3, 3)
+# plt.imshow(decrypted_img)
+# plt.axis("off")
+# plt.title("Decrypted Image")
 
-plt.subplot(2, 3, 6)
-counts, bins = np.histogram(chaoticencryptedArray.flatten())
-plt.stairs(counts, bins)
-plt.show()
- """
+# plt.subplot(2, 3, 6)
+# counts, bins = np.histogram(inverse_perm.flatten())
+# plt.stairs(counts, bins)
+# plt.show()
