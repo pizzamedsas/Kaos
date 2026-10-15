@@ -25,16 +25,16 @@ def ArnoldCatMapTransform(matrix: NDArray, iterations: int, Q: int, P: int) -> N
 
     return result
 #Permuterar alla pixlar
-def InverseArnoldCatMapTransform(matrix: NDArray, iterations: int, Q: int, P: int) -> NDArray:
+def InverseArnoldCatMapTransform(keystream: NDArray, iterations: int, Q: int, P: int) -> NDArray:
 
-    N, M = matrix.shape[0], matrix.shape[1]
+    N, M = keystream.shape[0], keystream.shape[1]
 
     x, y = np.meshgrid(np.arange(N), np.arange(N), indexing="ij")
 
     x_new = (x + P * y) % N
     y_new = (Q * x + (P * Q + 1) * y) % N
 
-    result = matrix.copy()
+    result = keystream.copy()
     for _ in range(iterations):
         result = result[x_new, y_new]
     return result
@@ -108,31 +108,38 @@ inverse_perm = InverseArnoldCatMapTransform(decrypted_flat.reshape(matrix.shape)
 # Sparar dekrypterad 3D matris som bild igen
 decrypted_img = Image.fromarray(inverse_perm)
 
-# plt.subplot(2, 3, 1)
-# plt.imshow(img)
-# plt.axis("off")
-# plt.title("Original Image")
 
 
-# plt.subplot(2, 3, 4)
-# counts, bins = np.histogram(matrix.flatten())
-# plt.stairs(counts, bins)
+#Plottar bilder med matplotlib och respektive gråskala histogram
+def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
 
-# plt.subplot(2, 3, 2)
-# plt.imshow(chaosEncryptedImg)
-# plt.axis("off")
-# plt.title("Chaotic Cipher")
+    plt.subplot(2, 3, 1)
+    plt.imshow(Image.fromarray(bild1))
+    plt.axis("off")
+    plt.title("Original Image")
 
-# plt.subplot(2, 3, 5)
-# counts, bins = np.histogram(chaoticencryptedArray.flatten())
-# plt.stairs(counts, bins)
 
-# plt.subplot(2, 3, 3)
-# plt.imshow(decrypted_img)
-# plt.axis("off")
-# plt.title("Decrypted Image")
+    plt.subplot(2, 3, 4)
+    counts, bins = np.histogram(bild1.flatten())
+    plt.stairs(counts, bins)
 
-# plt.subplot(2, 3, 6)
-# counts, bins = np.histogram(inverse_perm.flatten())
-# plt.stairs(counts, bins)
-# plt.show()
+    plt.subplot(2, 3, 2)
+    plt.imshow(Image.fromarray(bild2))
+    plt.axis("off")
+    plt.title("Chaotic Cipher")
+
+    plt.subplot(2, 3, 5)
+    counts, bins = np.histogram(bild1.flatten())
+    plt.stairs(counts, bins, fill=True)
+    plt.xlabel('RGB value')
+    plt.ylabel('Frequency')
+
+    plt.subplot(2, 3, 3)
+    plt.imshow(Image.fromarray(bild3))
+    plt.axis("off")
+    plt.title("Decrypted Image")
+
+    plt.subplot(2, 3, 6)
+    counts, bins = np.histogram(bild3.flatten())
+    plt.stairs(counts, bins)
+    plt.show() 

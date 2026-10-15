@@ -10,7 +10,8 @@ ratt_nycklar = itm.chaotickeys.T
 
 #kopierar rätt nyckel men ändrar de första 3 elementen till 1. Borde kanske bara ändra enskilda bits?
 fel_nycklar = ratt_nycklar.copy()
-fel_nycklar[0,:] = [1,1,1]
+fel_nycklar[0,:] = [78,18,108]
+fel_nycklar[1,:] = [1,1,1]
 
 # --- Dekryptering med rätt nycklar------------------------------------------------------------
 # desubstituerad = np.bitwise_xor(krypterad.reshape(-1,3), ratt_nycklar)
@@ -18,8 +19,8 @@ fel_nycklar[0,:] = [1,1,1]
 
 # --- Dekryptering med Near-Miss keys ------------------------------------------------------------
 desubstituerad = np.bitwise_xor(krypterad.reshape(-1,3), fel_nycklar).reshape(original.shape)
-dekrypterad = itm.InverseArnoldCatMapTransform(desubstituerad, 9, 1, 1)
-
+dekrypterad = itm.InverseArnoldCatMapTransform(desubstituerad, 10, 1, 1)
+print()
 # --- Mått ------------------------------------------------------------
 print(fel_nycklar)
 print(f"Entropi original:         {entropi(original):.4f}")
@@ -38,3 +39,6 @@ for namn, bild in [("original", original), ("dekrypterad bild", dekrypterad)]:
 npcr, uaci = npcr_uaci(original, dekrypterad)
 print()
 print(f"NPCR: {npcr:.2f} %   UACI: {uaci:.2f} %")
+
+#---------------Visa bilder----------------------------------
+itm.plotImages(original, krypterad, dekrypterad)
