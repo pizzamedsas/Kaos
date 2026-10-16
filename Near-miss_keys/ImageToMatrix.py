@@ -7,7 +7,8 @@ from numpy.typing import NDArray
 from PIL import Image
 from scipy.integrate import solve_ivp
 
-#Permuterar alla pixlar
+
+# Permuterar alla pixlar
 def ArnoldCatMapTransform(matrix: NDArray, iterations: int, Q: int, P: int) -> NDArray:
 
     N, M = matrix.shape[0], matrix.shape[1]
@@ -24,8 +25,12 @@ def ArnoldCatMapTransform(matrix: NDArray, iterations: int, Q: int, P: int) -> N
         result = transformed
 
     return result
-#Permuterar alla pixlar
-def InverseArnoldCatMapTransform(keystream: NDArray, iterations: int, Q: int, P: int) -> NDArray:
+
+
+# Permuterar alla pixlar
+def InverseArnoldCatMapTransform(
+    keystream: NDArray, iterations: int, Q: int, P: int
+) -> NDArray:
 
     N, M = keystream.shape[0], keystream.shape[1]
 
@@ -39,8 +44,18 @@ def InverseArnoldCatMapTransform(keystream: NDArray, iterations: int, Q: int, P:
         result = result[x_new, y_new]
     return result
 
-#Skapar en kaotisk nyckel genom att iterera lorenz system 
-def lorenzsColorShuffle(number: int, x0: float, y0: float, z0: float,sigma: float, rho: float, beta: float, transient: float, dt: float,
+
+# Skapar en kaotisk nyckel genom att iterera lorenz system
+def lorenzsColorShuffle(
+    number: int,
+    x0: float,
+    y0: float,
+    z0: float,
+    sigma: float,
+    rho: float,
+    beta: float,
+    transient: float,
+    dt: float,
 ) -> NDArray:
     def lorenz_deriv(t, state, s, r, b):
         x, y, z = state
@@ -61,10 +76,11 @@ def lorenzsColorShuffle(number: int, x0: float, y0: float, z0: float,sigma: floa
     keys = (np.abs(sol.y) * 1e6).astype(np.uint64) % 256
     return keys.astype(np.uint8)
 
-#Använder en nyckel för att ändra pixel värden, använd denna eller XOR bitwise
+
+# Använder en nyckel för att ändra pixel värden, använd denna eller XOR bitwise
 def lorenzDiffuse(matrix: NDArray, keys: NDArray) -> NDArray:
     pixels = matrix.reshape(-1, 3)
-    print(ks.shape)
+    print(keys.shape)
     ks = keys.T
     print(ks.shape)
 
@@ -91,33 +107,33 @@ chaosShuffledImg = Image.fromarray(chaosShuffledArray)
 
 # Sparar krypterad 3D matris som bild igen
 H, W = matrix.shape[:2]
-chaotickeys= lorenzsColorShuffle(H * W, 1.0, 1.0, 1.0, 10.0, 28.0, 8.0 / 3.0, 50.0, 0.005)
+chaotickeys = lorenzsColorShuffle(
+    H * W, 1.0, 1.0, 1.0, 10.0, 28.0, 8.0 / 3.0, 50.0, 0.005
+)
 
 # chaoticencryptedArray = lorenzDiffuse(chaosShuffledArray, chaotickeystream)
-chaoticencryptedArray = np.bitwise_xor(
-    chaosShuffledArray.reshape(-1, 3), chaotickeys.T
-)
+chaoticencryptedArray = np.bitwise_xor(chaosShuffledArray.reshape(-1, 3), chaotickeys.T)
 chaosEncryptedImg = Image.fromarray(chaoticencryptedArray.reshape(matrix.shape))
 
 # Dekrypterar diffusionen genom samma bitwise XOR igen m.h.a nyckeln chaotickeys
-decrypted_flat = np.bitwise_xor(chaoticencryptedArray.reshape(-1,3), chaotickeys.T)
+decrypted_flat = np.bitwise_xor(chaoticencryptedArray.reshape(-1, 3), chaotickeys.T)
 
-#Sorterar tillbaka pixlarna till deras ursprungliga plats m.h.a nycklarna iterations, P och Q
-inverse_perm = InverseArnoldCatMapTransform(decrypted_flat.reshape(matrix.shape),10, 1, 1)
+# Sorterar tillbaka pixlarna till deras ursprungliga plats m.h.a nycklarna iterations, P och Q
+inverse_perm = InverseArnoldCatMapTransform(
+    decrypted_flat.reshape(matrix.shape), 10, 1, 1
+)
 
 # Sparar dekrypterad 3D matris som bild igen
 decrypted_img = Image.fromarray(inverse_perm)
 
 
-
-#Plottar bilder med matplotlib och respektive gråskala histogram
+# Plottar bilder med matplotlib och respektive gråskala histogram
 def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
 
     plt.subplot(2, 3, 1)
     plt.imshow(Image.fromarray(bild1))
     plt.axis("off")
     plt.title("Original Image")
-
 
     plt.subplot(2, 3, 4)
     counts, bins = np.histogram(bild1.flatten())
@@ -131,8 +147,8 @@ def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
     plt.subplot(2, 3, 5)
     counts, bins = np.histogram(bild1.flatten())
     plt.stairs(counts, bins, fill=True)
-    plt.xlabel('RGB value')
-    plt.ylabel('Frequency')
+    plt.xlabel("RGB value")
+    plt.ylabel("Frequency")
 
     plt.subplot(2, 3, 3)
     plt.imshow(Image.fromarray(bild3))
@@ -142,4 +158,5 @@ def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
     plt.subplot(2, 3, 6)
     counts, bins = np.histogram(bild3.flatten())
     plt.stairs(counts, bins)
-    plt.show() 
+    plt.show()
+
