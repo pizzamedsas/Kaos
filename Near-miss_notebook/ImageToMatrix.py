@@ -108,7 +108,7 @@ chaosShuffledImg = Image.fromarray(chaosShuffledArray)
 # Sparar krypterad 3D matris som bild igen
 H, W = matrix.shape[:2]
 chaotickeys = lorenzsColorShuffle(
-    H * W, 1.0, 1.0, 1.0, 10.0, 28.0, 8.0 / 3.0, 50.0, 0.005
+    H * W, 1.0, 0.0, 1.05, 10.0, 28.0, 8.0 / 3.0, 50.0, 0.005
 )
 
 # chaoticencryptedArray = lorenzDiffuse(chaosShuffledArray, chaotickeystream)
@@ -125,8 +125,25 @@ inverse_perm = InverseArnoldCatMapTransform(
 
 # Sparar dekrypterad 3D matris som bild igen
 decrypted_img = Image.fromarray(inverse_perm)
+'''
+colors = ["red", "green", "blue"]
+names = ["R", "G", "B"]
 
 
+colors = ["red", "green", "blue"]
+names = ["R", "G", "B"]
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4), sharey=True)
+for i, ax in enumerate(axes):
+    counts, bins = np.histogram(matrix[:, :, i].ravel(), bins=256, range=(0, 256))
+    ax.stairs(counts, bins, color=colors[i], fill=True, edgecolor=colors[i])
+    ax.set_title(f"{names[i]} channel")
+    ax.set_xlim(0, 255)
+    ax.set_xlabel("Pixel value")
+axes[0].set_ylabel("Count")
+plt.tight_layout()
+plt.show()
+'''
 # Plottar bilder med matplotlib och respektive gråskala histogram
 def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
 
@@ -136,8 +153,10 @@ def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
     plt.title("Original Image")
 
     plt.subplot(2, 3, 4)
+    plt.tick_params(axis='both', labelsize=4)
     counts, bins = np.histogram(bild1.flatten())
     plt.stairs(counts, bins)
+    plt.ylabel("Frequency")
 
     plt.subplot(2, 3, 2)
     plt.imshow(Image.fromarray(bild2))
@@ -145,10 +164,10 @@ def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
     plt.title("Chaotic Cipher")
 
     plt.subplot(2, 3, 5)
-    counts, bins = np.histogram(bild1.flatten())
-    plt.stairs(counts, bins, fill=True)
+    plt.tick_params(axis='both', labelsize=4)
+    counts, bins = np.histogram(bild2.flatten())
+    plt.stairs(counts, bins)
     plt.xlabel("RGB value")
-    plt.ylabel("Frequency")
 
     plt.subplot(2, 3, 3)
     plt.imshow(Image.fromarray(bild3))
@@ -156,7 +175,7 @@ def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
     plt.title("Decrypted Image")
 
     plt.subplot(2, 3, 6)
+    plt.tick_params(axis='both', labelsize=4)
     counts, bins = np.histogram(bild3.flatten())
     plt.stairs(counts, bins)
     plt.show()
-

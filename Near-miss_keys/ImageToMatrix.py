@@ -159,4 +159,3 @@ def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
     counts, bins = np.histogram(bild3.flatten())
     plt.stairs(counts, bins)
     plt.show()
-
