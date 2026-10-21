@@ -36,7 +36,9 @@ for namn, bild in [("original", original), ("dekrypterad bild", dekrypterad)]:
         f"Grannkorrelation {namn}: " + ", ".join(f"{k} {v:.3f}" for k, v in gk.items())
     )
 
-npcr, uaci = npcr_uaci(original, dekrypterad)
+
+##Här måste man jämföra två olika krypterade bilder, annars blir NPCR och UACI 0.
+npcr, uaci = npcr_uaci("Krypterad 1", "Krypterad 2")
 print()
 print(f"NPCR: {npcr:.2f} %   UACI: {uaci:.2f} %")
 
