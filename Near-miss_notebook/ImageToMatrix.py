@@ -76,19 +76,32 @@ def lorenzsColorShuffle(
     keys = (np.abs(sol.y) * 1e6).astype(np.uint64) % 256
     return keys.astype(np.uint8)
 
-
 # Använder en nyckel för att ändra pixel värden, använd denna eller XOR bitwise
 def lorenzDiffuse(matrix: NDArray, keys: NDArray) -> NDArray:
-    pixels = matrix.reshape(-1, 3)
-    print(keys.shape)
-    ks = keys.T
-    print(ks.shape)
+    pixels = matrix.reshape(-1, 3).copy()
+    ks = keys.reshape(-1, 3)
 
-    out = np.empty_like(pixels)
-    prev = ks[0].copy()
+    out = np.zeros_like(pixels)
+    prev = ks[0]
+
     for i in range(pixels.shape[0]):
-        out[i] = pixels[i] + ks[i] + prev
+        out[i] = (pixels[i].astype(int) + ks[i].astype(int) + prev.astype(int)) % 256
         prev = out[i]
+    return out.reshape(matrix.shape)
+
+def inverseLorenzDiffuse(matrix: NDArray, keys: NDArray) ->NDArray:
+    pixels = matrix.reshape(-1,3).copy()
+    ks = keys.reshape(-1, 3)
+
+    out = np.zeros_like(pixels)
+    prev = ks[0]
+
+    for i in range(pixels.shape[0]):
+        if i == 0: 
+            prev = ks[0].astype(int) 
+        else:
+            prev = pixels[i-1]
+        out[i] = (pixels[i].astype(int) - ks[i].astype(int) - prev.astype(int)) % 256
     return out.reshape(matrix.shape)
 
 
@@ -111,17 +124,16 @@ chaotickeys = lorenzsColorShuffle(
     H * W, 1.0, 0.0, 1.05, 10.0, 28.0, 8.0 / 3.0, 50.0, 0.005
 )
 
-# chaoticencryptedArray = lorenzDiffuse(chaosShuffledArray, chaotickeystream)
-chaoticencryptedArray = np.bitwise_xor(chaosShuffledArray.reshape(-1, 3), chaotickeys.T)
+chaoticencryptedArray = lorenzDiffuse(chaosShuffledArray, chaotickeys.T)
+# chaoticencryptedArray = np.bitwise_xor(chaosShuffledArray.reshape(-1, 3), chaotickeys.T)
 chaosEncryptedImg = Image.fromarray(chaoticencryptedArray.reshape(matrix.shape))
 
 # Dekrypterar diffusionen genom samma bitwise XOR igen m.h.a nyckeln chaotickeys
-decrypted_flat = np.bitwise_xor(chaoticencryptedArray.reshape(-1, 3), chaotickeys.T)
+# decrypted_flat = np.bitwise_xor(chaoticencryptedArray.reshape(-1, 3), chaotickeys.T)
+decrypted_flat = inverseLorenzDiffuse(chaoticencryptedArray, chaotickeys.T)
 
 # Sorterar tillbaka pixlarna till deras ursprungliga plats m.h.a nycklarna iterations, P och Q
-inverse_perm = InverseArnoldCatMapTransform(
-    decrypted_flat.reshape(matrix.shape), 10, 1, 1
-)
+inverse_perm = InverseArnoldCatMapTransform(decrypted_flat.reshape(matrix.shape), 10, 1, 1)
 
 # Sparar dekrypterad 3D matris som bild igen
 decrypted_img = Image.fromarray(inverse_perm)
@@ -144,6 +156,7 @@ axes[0].set_ylabel("Count")
 plt.tight_layout()
 plt.show()
 '''
+
 # Plottar bilder med matplotlib och respektive gråskala histogram
 def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
 
@@ -179,3 +192,5 @@ def plotImages(bild1: NDArray, bild2: NDArray, bild3: NDArray):
     counts, bins = np.histogram(bild3.flatten())
     plt.stairs(counts, bins)
     plt.show()
+
+plotImages(matrix, chaoticencryptedArray, inverse_perm)
