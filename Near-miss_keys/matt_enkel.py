@@ -53,13 +53,13 @@ def korrelation(a, b):
 def grannkorrelation(bild):
     b = bild.astype(np.float64)
 
-    horisontellt = korrelation(b[:, :-1], b[:, 1:])
-    vertikalt = korrelation(b[:-1, :], b[1:, :])
-    diagonalt = korrelation(b[:-1, :-1], b[1:, 1:])
+    horizontal = korrelation(b[:, :-1], b[:, 1:])
+    vertical = korrelation(b[:-1, :], b[1:, :])
+    diagonal = korrelation(b[:-1, :-1], b[1:, 1:])
 
-    return {"horisontellt": horisontellt,
-            "vertikalt": vertikalt,
-            "diagonalt": diagonalt}
+    return {"horizontal": horizontal,
+            "vertikalt": vertical,
+            "diagonal": diagonal}
 
 
 # 3. NPCR och UACI
